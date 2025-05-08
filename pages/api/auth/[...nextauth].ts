@@ -1,11 +1,26 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Type augmentation
+declare global {
+  var prisma: PrismaClient | undefined;
+}
 
-export default NextAuth({
+// Prisma client initialization
+let prisma: PrismaClient;
+
+if (process.env.NODE_ENV === "production") {
+  prisma = new PrismaClient();
+} else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient();
+  }
+  prisma = global.prisma;
+}
+
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -28,7 +43,6 @@ export default NextAuth({
       }
       return session;
     },
-    // Remove or simplify the redirect callback
     async redirect({ url, baseUrl }) {
       return url.startsWith(baseUrl) ? url : baseUrl;
     }
@@ -37,4 +51,6 @@ export default NextAuth({
     signIn: '/auth/signin',
     error: '/auth/signin',
   }
-});
+};
+
+export default NextAuth(authOptions);
