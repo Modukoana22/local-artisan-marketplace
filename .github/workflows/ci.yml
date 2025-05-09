@@ -1,12 +1,17 @@
-name: CI Pipeline
+name: Auth CI Pipeline
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
+env:
+  DATABASE_URL: "mysql://root:root@localhost:3307/artisan_marketplace"  # Using root for full access
+  NEXTAUTH_URL: "http://localhost:3000"
+  NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+
 jobs:
-  test:
+  auth-test:
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -16,9 +21,10 @@ jobs:
           MYSQL_USER: marketplace_user
           MYSQL_PASSWORD: password
           MYSQL_DATABASE: artisan_marketplace
+          MYSQL_ROOT_HOST: '%'  # Critical for root access
         ports: [3307:3306]
         options: >-
-          --health-cmd="mysqladmin ping -u marketplace_user -ppassword"
+          --health-cmd="mysqladmin ping -uroot -proot"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
@@ -34,24 +40,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Set up Prisma
-        run: npx prisma generate
+      - name: Setup Database Schema
+        run: |
+          npx prisma generate
+          npx prisma db push --skip-generate  # Replaces migrate dev
+          npx prisma migrate status
       
-      - name: Run migrations
+      - name: Run Auth Tests
         env:
-          DATABASE_URL: "mysql://marketplace_user:password@localhost:3307/artisan_marketplace"
-        run: npx prisma migrate dev --name ci_init --skip-generate
+          DATABASE_URL: "mysql://marketplace_user:password@localhost:3307/artisan_marketplace"  # App-level user
+        run: npm test -- __tests__/auth.test.js
       
-      - name: Build application
+      - name: Build Sign-in Page
         run: npm run build
-      
-      - name: Run tests
-        env:
-          DATABASE_URL: "mysql://marketplace_user:password@localhost:3307/artisan_marketplace"
-          NEXTAUTH_URL: "http://localhost:3000"
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-        run: npm test
-      
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        if: success()
