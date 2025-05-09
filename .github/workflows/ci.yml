@@ -38,7 +38,9 @@ jobs:
           cache: 'npm'
       
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm install -g mysql2  # Install MySQL client
       
       - name: Setup Database
         run: |
@@ -46,14 +48,11 @@ jobs:
           npx prisma db push --skip-generate --accept-data-loss
           echo "Database schema synchronized"
       
-      - name: Verify Setup
-        env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
+      - name: Verify Database
         run: |
-          # Check tables using direct MySQL client
+          # Using native MySQL client instead of prisma db execute
           mysql -h 127.0.0.1 -P 3307 -uroot -proot artisan_marketplace -e "SHOW TABLES;"
-          # Verify Prisma version
-          npx prisma --version
+          echo "Prisma version: $(npx prisma --version)"
       
       - name: Run Auth Tests
         env:
