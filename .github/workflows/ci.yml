@@ -1,5 +1,5 @@
 name: CI Pipeline
-on:  # This section defines triggers
+on:
   push:
     branches: [ main ]
   pull_request:
@@ -8,11 +8,50 @@ on:  # This section defines triggers
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_USER: marketplace_user
+          MYSQL_PASSWORD: password
+          MYSQL_DATABASE: artisan_marketplace
+        ports: [3307:3306]
+        options: >-
+          --health-cmd="mysqladmin ping -u marketplace_user -ppassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
-      - run: npm run build  # First ensure Next.js builds
-      - run: npm test || true  # Temporary test bypass
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Set up Prisma
+        run: npx prisma generate
+      
+      - name: Run migrations
+        env:
+          DATABASE_URL: "mysql://marketplace_user:password@localhost:3307/artisan_marketplace"
+        run: npx prisma migrate dev --name ci_init --skip-generate
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Run tests
+        env:
+          DATABASE_URL: "mysql://marketplace_user:password@localhost:3307/artisan_marketplace"
+          NEXTAUTH_URL: "http://localhost:3000"
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+        run: npm test
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        if: success()
