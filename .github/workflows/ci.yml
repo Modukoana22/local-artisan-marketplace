@@ -42,6 +42,7 @@ jobs:
       
       - name: Install dependencies
         run: |
+          npm install -g next    # Install Next.js globally
           npm ci
           npm install -g mysql2  # Install MySQL client
       
