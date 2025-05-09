@@ -36,6 +36,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+
+      - name: Clear npm cache 
+        run: npm cache clean --force
       
       - name: Install dependencies
         run: |
@@ -65,4 +68,5 @@ jobs:
           npm test -- __tests__/smoke.test.js
       
       - name: Build Sign-in Page
-        run: npm run build
+        run: npx prisma generate && next build
+        
