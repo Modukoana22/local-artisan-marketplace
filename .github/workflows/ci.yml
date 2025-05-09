@@ -47,8 +47,12 @@ jobs:
           echo "Database schema synchronized"
       
       - name: Verify Setup
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: |
-          npx prisma db execute --stdin <<< "SHOW TABLES;"
+          # Check tables using direct MySQL client
+          mysql -h 127.0.0.1 -P 3307 -uroot -proot artisan_marketplace -e "SHOW TABLES;"
+          # Verify Prisma version
           npx prisma --version
       
       - name: Run Auth Tests
