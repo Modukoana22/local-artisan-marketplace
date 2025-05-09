@@ -65,4 +65,4 @@ jobs:
           npm test -- __tests__/smoke.test.js
       
       - name: Build Sign-in Page
-        run: npm run build
+        run: npx prisma generate && next build
