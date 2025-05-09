@@ -69,4 +69,7 @@ jobs:
       
       - name: Build Sign-in Page
         run: npx prisma generate && next build
+<<<<<<< HEAD
         
+=======
+>>>>>>> f72b321cbe3ea795228328a27f085bb6ce079cc5
