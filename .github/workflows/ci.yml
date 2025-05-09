@@ -57,7 +57,12 @@ jobs:
       - name: Run Auth Tests
         env:
           DATABASE_URL: "mysql://marketplace_user:password@localhost:3307/artisan_marketplace"
-        run: npm test -- __tests__/auth.test.js
+        run: |
+          # Create minimal setup file if missing
+          if [ ! -f jest.setup.js ]; then
+            echo "console.log('Jest setup initialized');" > jest.setup.js
+          fi
+          npm test -- __tests__/auth.test.js
       
       - name: Build Sign-in Page
         run: npm run build
