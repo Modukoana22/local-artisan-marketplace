@@ -49,7 +49,7 @@ jobs:
       - name: Wait for MySQL
         run: |
           for i in {1..10}; do
-            if mysql -h localhost -P 3307 -uroot -proot -e "SELECT 1"; then
+            if mysql -h artisandb.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -p v7G#pLz9eK1!MwT -e "SELECT 1"; then
               echo "MySQL is ready!"
               break
             fi
@@ -65,7 +65,7 @@ jobs:
       
       - name: Verify Database
         run: |
-          mysql -h localhost -P 3307 -umarketplace_user -ppassword artisan_marketplace -e "SHOW TABLES;"
+          mysql -h artisandb.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -p v7G#pLz9eK1!MwT artisandb -e "SHOW TABLES;"
           echo "Prisma version: $(npx prisma --version)"
       
       - name: Run Auth Tests
