@@ -33,7 +33,7 @@ jobs:
       - name: Wait for MySQL RDS
         run: |
           for i in {1..10}; do
-            if mysql -h artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -p${{ secrets.RDS_PASSWORD }} -e "SELECT 1" --connect-timeout=5; then
+            if MYSQL_PWD="${{ secrets.RDS_PASSWORD }}" mysql -h artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -e "SELECT 1" --connect-timeout=5; then
               echo "MySQL RDS is accessible!"
               break
             fi
@@ -53,7 +53,7 @@ jobs:
       
       - name: Verify Database
         run: |
-          mysql -h artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -p${{ secrets.RDS_PASSWORD }} artisandb -e "SHOW TABLES;"
+          MYSQL_PWD="${{ secrets.RDS_PASSWORD }}" mysql -h artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin artisandb -e "SHOW TABLES;"
           echo "Prisma version: $(npx prisma --version)"
       
       - name: Run Auth Tests
