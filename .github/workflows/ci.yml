@@ -29,46 +29,39 @@ jobs:
           npm install -g next
           npm ci
           npm install -g mysql2
-          sudo apt-get update && sudo apt-get install -y netcat-openbsd
 
-      - name: Display GitHub Actions Runner IP
+      - name: Wait for MySQL RDS
         run: |
-          echo "GitHub Actions runner public IP address:"
-          curl -s https://api.ipify.org
-          echo ""
-          echo "Make sure this IP is allowed in your RDS security group for port 3306"
-          echo "DNS resolution check for RDS endpoint:"
-          nslookup artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com
+          for i in {1..10}; do
+            if mysql -h artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -p${{ secrets.RDS_PASSWORD }} -e "SELECT 1" --connect-timeout=5; then
+              echo "MySQL RDS is accessible!"
+              break
+            fi
+            echo "Waiting for MySQL RDS connection... Attempt $i"
+            sleep 5
+            if [ $i -eq 10 ]; then
+              echo "Failed to connect to MySQL RDS after multiple attempts"
+              exit 1
+            fi
+          done
 
-      - name: Check MySQL connectivity
-        continue-on-error: true
+      - name: Setup Prisma and Database
         run: |
-          echo "Checking connection to artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com:3306"
-          nc -zv artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com 3306
-          echo "If connection failed, you need to update your RDS security group"
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-
-      # Comment out database-dependent steps until RDS connectivity is fixed
-      # Uncomment these steps after updating your RDS security group
+          npx prisma generate
+          npx prisma db push --skip-generate --accept-data-loss
+          echo "Database schema synchronized"
       
-      # - name: Setup Prisma and Database
-      #   run: |
-      #     npx prisma db push --skip-generate --accept-data-loss
-      #     echo "Database schema synchronized"
+      - name: Verify Database
+        run: |
+          mysql -h artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -p${{ secrets.RDS_PASSWORD }} artisandb -e "SHOW TABLES;"
+          echo "Prisma version: $(npx prisma --version)"
       
-      # - name: Verify Database
-      #   run: |
-      #     MYSQL_PWD="${{ secrets.RDS_PASSWORD }}" mysql -h artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin artisandb -e "SHOW TABLES;"
-      #     echo "Prisma version: $(npx prisma --version)"
-      
-      # - name: Run Auth Tests
-      #   run: |
-      #     if [ ! -f jest.setup.js ]; then
-      #       echo "console.log('Jest setup initialized'); module.exports = {};" > jest.setup.js
-      #     fi
-      #     npm test -- __tests__/smoke.test.js --passWithNoTests
+      - name: Run Auth Tests
+        run: |
+          if [ ! -f jest.setup.js ]; then
+            echo "console.log('Jest setup initialized'); module.exports = {};" > jest.setup.js
+          fi
+          npm test -- __tests__/smoke.test.js --passWithNoTests
       
       - name: Build Application
-        run: next build
+        run: npx prisma generate && next build
