@@ -29,6 +29,14 @@ jobs:
           npm install -g next
           npm ci
           npm install -g mysql2
+          sudo apt-get update && sudo apt-get install -y netcat-openbsd
+
+      - name: Check MySQL connectivity
+        run: |
+          echo "Checking connection to artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com:3306"
+          nc -zv artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com 3306
+          echo "DNS resolution check:"
+          nslookup artisan-dev-db.czcyia4g2bjq.eu-north-1.rds.amazonaws.com
 
       - name: Wait for MySQL RDS
         run: |
