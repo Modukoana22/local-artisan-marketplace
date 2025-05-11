@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 env:
-  DATABASE_URL: "artisandb.czcyia4g2bjq.eu-north-1.rds.amazonaws.com"
+  DATABASE_URL: "mysql://artisandb.czcyia4g2bjq.eu-north-1.rds.amazonaws.com"
   NEXTAUTH_URL: "http://localhost:3000"
   NEXTAUTH_SECRET: "21a0540ec169877eaed606f8320f346dcf7f5e2955cf5ccf7f7a04c6bbda08b5"
 
