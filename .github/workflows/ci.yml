@@ -6,9 +6,9 @@ on:
     branches: [main]
 
 env:
-  DATABASE_URL: "mysql://marketplace_user:password@localhost:3307/artisan_marketplace"
+  DATABASE_URL: "artisandb.czcyia4g2bjq.eu-north-1.rds.amazonaws.com"
   NEXTAUTH_URL: "http://localhost:3000"
-  NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+  NEXTAUTH_SECRET: "21a0540ec169877eaed606f8320f346dcf7f5e2955cf5ccf7f7a04c6bbda08b5"
 
 jobs:
   auth-test:
@@ -18,10 +18,10 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_USER: marketplace_user
-          MYSQL_PASSWORD: password
-          MYSQL_DATABASE: artisan_marketplace
-          MYSQL_ROOT_HOST: '%'
+          MYSQL_USER: admin
+          MYSQL_PASSWORD: v7G#pLz9eK1!MwT
+          MYSQL_DATABASE: artisandb
+          MYSQL_ROOT_HOST: 'artisandb.czcyia4g2bjq.eu-north-1.rds.amazonaws.com'
         ports: [3307:3306]
         options: >-
           --health-cmd="mysqladmin ping -uroot -proot"
@@ -49,7 +49,7 @@ jobs:
       - name: Wait for MySQL
         run: |
           for i in {1..10}; do
-            if mysql -h artisandb.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -p v7G#pLz9eK1!MwT -e "SELECT 1"; then
+            if mysql -h artisandb.czcyia4g2bjq.eu-north-1.rds.amazonaws.com -P 3306 -u admin -p v7G#pLz9eK1!MwT artisandb -e "SELECT 1"; then
               echo "MySQL is ready!"
               break
             fi
